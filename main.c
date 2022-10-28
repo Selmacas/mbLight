@@ -50,15 +50,15 @@ uint16_t modbus_lib_read_handler(uint16_t la){ // la: logical_address
     	case 40001:
             return leds[0];
         case 40002:
-            return leds[1];
+            return leds[2];
         case 40003:
-        	return leds[3];
+        	return leds[4];
         case 40004:
             return TA0CCR1;
         case 40005:
-            return TA1CCR1;
+            return TA1CCR2;
         case 40006:
-        	return TA1CCR2;
+        	return TA1CCR1;
         default:
             return modbus_lib_send_error(MBUS_RESPONSE_ILLEGAL_DATA_ADDRESS);
     }
@@ -79,15 +79,15 @@ uint16_t modbus_lib_write_handler(uint16_t la, uint16_t value)
     	case 40002:
     		if(value < LED_STEPS)
     		{
-    			leds[1] = value;
-    			TA1CCR1 = lut[value];
+    			leds[2] = value;
+    			TA1CCR2 = lut[value];
     		}
     		break;
     	case 40003:
     		if(value < LED_STEPS)
     		{
-    			leds[2] = value;
-    			TA1CCR2 = lut[value];
+    			leds[1] = value;
+    			TA1CCR1 = lut[value];
     		}
     		break;
 
@@ -101,15 +101,15 @@ uint16_t modbus_lib_write_handler(uint16_t la, uint16_t value)
     	case 40005:
     		if(value < 1001)
     		{
-    			leds[1] = 0xffff;
-    			TA1CCR1 = value;
+    			leds[2] = 0xffff;
+    			TA1CCR2 = value;
     		}
     		break;
     	case 40006:
     		if(value < 1001)
     		{
-    			leds[2] = 0xffff;
-    			TA1CCR2 = value;
+    			leds[1] = 0xffff;
+    			TA1CCR1 = value;
     		}
     		break;
 
@@ -138,17 +138,27 @@ int modbus_lib_transport_write(uint8_t* buffer, uint16_t length)
 void init_pins(void)
 {
 
+	P1SEL = 0;
+	P1SEL2 = 0;
+	P1DIR = 0;
+
+	P2SEL = 0;
+	P2SEL2 = 0;
+	P2DIR = 0;
+
 	P1DIR |= BIT0; // Set bit0 in the I/O direction register to define as an output
 	P1OUT &= ~BIT0;
 
-	P1DIR |= BIT6; // Set P1.6 as output
-	P1SEL |= BIT6; // Select output P1.6 to be TA0.1 // remap to P2.6 on 1.6 is i2c
 
-	P2DIR |= BIT2; // Set P2.1 as output
+	P2DIR |= BIT2; // Set P2.2 as output
 	P2SEL |= BIT2; // Select output P2.2 to be TA1.1
+
 
 	P2DIR |= BIT5; // Set P2.5 as output
 	P2SEL |= BIT5; // Select output P2.5 to be TA1.2
+
+	P2DIR |= BIT6; // Set P1.6 as output
+	P2SEL |= BIT6; // Select output P1.6 to be TA0.1 // remap to P2.6 on 1.6 is i2c
 
 	P1SEL |= BIT1 | BIT2; // P1.1 = RXD, P1.2=TXD
 	P1SEL2 |= BIT1 | BIT2; // P1.1 = RXD, P1.2=TXD
@@ -159,12 +169,14 @@ void init_timers()
 {
 	TA0CTL = TASSEL_2 + MC_1 + ID_0; // SMCLK as input clock, count up to TA0CCR0, clock/1
 	TA0CCR0 = 1000; // Set maximum count value to determine PWM frequency = SMCLK/ClockDivide/TACCR0 (1MHz/1/1000 = 1kHz)
+
 	TA0CCTL1 = OUTMOD_7; // Set output to on when counter resets and off when counter equals TA0CCR1. Normal PWM.a
 	TA0CCTL0 = CCIE;
 	TA0CCR1 = 0;
 
 	TA1CTL = TASSEL_2 + MC_1 + ID_0; // SMCLK as input clock, count up to TA0CCR0, clock/1
 	TA1CCR0 = 1000; // Set maximum count value to determine PWM frequency = SMCLK/ClockDivide/TACCR0 (1MHz/1/1000 = 1kHz)
+
 	TA1CCTL1 = OUTMOD_7; // Set output to on when counter resets and off when counter equals TA0CCR1. Normal PWM.a
 	TA1CCR1 = 0;
 
