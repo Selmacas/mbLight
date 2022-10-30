@@ -25,8 +25,10 @@ print('Listening on port %s ...' % SERVER_PORT)
 old_val1 = 50
 old_val2 = 50
 old_val3 = 50
-(old_val1, old_val2, old_val3) = led.read_registers(0, 3)
-
+try:
+    (old_val1, old_val2, old_val3) = led.read_registers(0, 3)
+except:
+    print("Cant read")
 
 while True:
     # Wait for client connections
@@ -43,19 +45,29 @@ while True:
         splParams = splNamPar[1].split("&")
         params = dict(subString.split("=") for subString in splParams)
         #print(params)
+        try:
+            (old_val1, old_val2, old_val3) = led.read_registers(0, 3)
+        except:
+            print("Cant read")
         if params.get('Jas1') != None:
             if params['Jas1'].isnumeric():
                 #print(int(params['Jas1']))
-                old_val1 = int(params['Jas1'])
+                if int(params['Jas1']) in range(0, 101):
+                    old_val1 = int(params['Jas1'])
         if params.get('Jas2') != None:
             if params['Jas2'].isnumeric():
                 #print(int(params['Jas2']))
-                old_val2 = int(params['Jas2'])
+                if int(params['Jas2']) in range(0, 101):
+                    old_val2 = int(params['Jas2'])
         if params.get('Jas3') != None:
             if params['Jas3'].isnumeric():
                 #print(int(params['Jas3']))
-                old_val3 = int(params['Jas3'])
-        led.write_registers(0, [old_val1, old_val2, old_val3])
+                if int(params['Jas3']) in range(0, 101):
+                    old_val3 = int(params['Jas3'])
+        try:
+            led.write_registers(0, [old_val1, old_val2, old_val3])
+        except:
+            print("Nepovedlo se zapsat data")
     #else:
         #print(filename)
     # Send HTTP response
